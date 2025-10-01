@@ -1,0 +1,73 @@
+
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: n8n
+      POSTGRES_PASSWORD: n8npass
+      POSTGRES_DB: n8ndb
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - n8nnet
+
+  n8n:
+    image: n8nio/n8n:1.112.6
+    restart: always
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: "5432"
+      DB_POSTGRESDB_DATABASE: n8ndb
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: n8npass
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: adminpass
+      N8N_HOST: t1.abc.com
+      N8N_PROTOCOL: https
+      N8N_PORT: 443                             
+      WEBHOOK_TUNNEL_URL: https://t1.abc.com
+      GENERIC_BACKEND_URL: https://t1.abc.com
+      WEBHOOK_URL: https://t1.abc.com
+      N8N_DEFAULT_BINARY_DATA_MODE: filesystem
+      N8N_RUNNERS_ENABLED: "true"
+      EXECUTIONS_PROCESS: main
+      EXECUTIONS_TIMEOUT: 900
+      N8N_SMTP_HOST: smtp.gmail.com
+      N8N_SMTP_PORT: 465                    
+      N8N_SMTP_USER: abc@vietnamlab.vn    
+      N8N_SMTP_PASS: abcpass   
+      N8N_SMTP_SENDER: n8n
+      GENERIC_TIMEZONE: Asia/Ho_Chi_Minh
+      TZ: Asia/Ho_Chi_Minh
+      N8N_FORMDATA_FILE_SIZE_MAX: "1024"
+      N8N_PAYLOAD_SIZE_MAX: "512"
+    volumes:
+      - n8n-data:/home/node/.n8n
+    expose:
+      - "443"
+    networks:
+      - n8nnet
+
+  nginx:
+    image: nginx:latest
+    restart: always
+    ports:
+      - "443:443"                                
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - n8n
+    networks:
+      - n8nnet
+
+volumes:
+  postgres-data:
+  n8n-data:
+
+networks:
+  n8nnet:
